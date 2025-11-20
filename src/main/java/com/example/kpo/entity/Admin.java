@@ -1,6 +1,11 @@
 package com.example.kpo.entity;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name= "admin")
@@ -45,3 +50,5 @@ public String password;
         this.password = password;
     }
 }
+
+

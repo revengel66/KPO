@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class AdminService {
+public class AdminService{
     private AdminRepository adminRepository;
 
     public AdminService(AdminRepository adminRepository) {
