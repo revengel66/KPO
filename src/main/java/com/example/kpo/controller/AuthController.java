@@ -25,7 +25,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> Authenticate(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.ok().build();
     }
 
 }
