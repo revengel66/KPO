@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
@@ -22,12 +23,15 @@ class AdminServiceTest {
     @Mock
     private AdminRepository adminRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AdminService adminService;
 
     @BeforeEach
     void setUp() {
-        adminService = new AdminService(adminRepository);
+        adminService = new AdminService(adminRepository, passwordEncoder);
     }
 
     @Test
@@ -46,6 +50,7 @@ class AdminServiceTest {
     @DisplayName("createAdminIfEmptuDB создаёт ADMIN при пустой БД")
     void createAdminIfEmptyCreatesDefaultAdmin() {
         when(adminRepository.count()).thenReturn(0L);
+        when(passwordEncoder.encode("")).thenReturn("");
 
         adminService.createAdminIfEmptuDB();
 
