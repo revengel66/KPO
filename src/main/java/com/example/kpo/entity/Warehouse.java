@@ -2,6 +2,7 @@ package com.example.kpo.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "warehouse")
@@ -9,6 +10,8 @@ public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotBlank(message = "Warehouse name is required")
+    @Column(nullable = false)
     private String name;
     private String info;
 

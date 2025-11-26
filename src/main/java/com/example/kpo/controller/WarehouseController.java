@@ -2,6 +2,7 @@ package com.example.kpo.controller;
 
 import com.example.kpo.entity.Warehouse;
 import com.example.kpo.service.WarehouseService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,14 +38,14 @@ public class WarehouseController {
     }
 
     @PostMapping
-    public ResponseEntity<Warehouse> addWarehouse(@RequestBody Warehouse warehouse) {
+    public ResponseEntity<Warehouse> addWarehouse(@Valid @RequestBody Warehouse warehouse) {
         Warehouse savedWarehouse = warehouseService.saveWarehouse(warehouse);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedWarehouse);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Warehouse> updateWarehouse(@PathVariable Long id,
-                                                     @RequestBody Warehouse warehouse) {
+                                                     @Valid @RequestBody Warehouse warehouse) {
         return warehouseService.getWarehouseById(id)
                 .map(existingWarehouse -> {
                     existingWarehouse.setName(warehouse.getName());
