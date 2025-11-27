@@ -2,6 +2,7 @@ package com.example.kpo.controller;
 
 import com.example.kpo.entity.Category;
 import com.example.kpo.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,14 +39,14 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
+    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
         Category createdCategory = categoryService.createCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id,
-                                                   @RequestBody Category category) {
+                                                   @Valid @RequestBody Category category) {
         return categoryService.getCategoryById(id)
                 .map(existingCategory -> {
                     existingCategory.setName(category.getName());
