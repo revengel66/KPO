@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 kpo.db
+.m2
 
 ### STS ###
 .apt_generated
