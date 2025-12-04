@@ -1,0 +1,161 @@
+/* ===== Цветовая палитра Bootstrap (чёрная тема) ===== */
+:root {
+    --bs-primary: #0f0f0f;
+    --bs-primary-rgb: 15, 15, 15;
+}
+
+/* ===== Базовые стили и фон (светлая тема) ===== */
+body {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #f4f5f7, #ffffff 60%);
+    font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    color: #212529;
+}
+
+/* ===== Блок авторизации ===== */
+.auth-wrapper {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 242, 245, 0.92));
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
+}
+
+/* ===== Стили форм ===== */
+.auth-card .form-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.form-control {
+    background-color: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #212529;
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+}
+
+.form-control::placeholder {
+    color: rgba(73, 80, 87, 0.65);
+}
+
+.form-control:focus {
+    border-color: #0f0f0f;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.08);
+    background-color: #fff;
+    color: #000;
+}
+
+/* ===== Кнопки ===== */
+.btn-primary {
+    background: #000;
+    border-color: #000;
+    border-radius: 999px;
+    padding: 0.9rem 1rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: #1b1b1b;
+    border-color: #1b1b1b;
+}
+
+.btn-primary .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+    color: #fff;
+}
+
+.btn-primary.loading .default-text {
+    opacity: 0.6;
+}
+
+/* ===== Модальные окна ===== */
+.modal-content {
+    border-radius: 24px;
+    box-shadow: 0 25px 40px rgba(15, 23, 42, 0.12);
+}
+
+.modal-dialog {
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.modal-footer .small {
+    color: rgba(73, 80, 87, 0.8);
+}
+
+.text-muted {
+    color: rgba(73, 80, 87, 0.8) !important;
+}
+
+/* ===== Панель управления (заглушка) ===== */
+.dashboard-header .nav-link {
+    color: #212529;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.dashboard-header .nav-link:hover,
+.dashboard-header .nav-link:focus {
+    opacity: 1;
+}
+
+.dashboard-wrapper {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #f4f5f7, #ffffff 70%);
+    padding-bottom: 4rem;
+}
+
+.dashboard-hero h1 {
+    letter-spacing: 0.1em;
+}
+
+.dashboard-panel {
+    padding: 1rem 0 2rem;
+}
+
+.feature-card {
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background-color: #fff;
+    padding: 1.5rem;
+    box-shadow: 0 20px 35px rgba(15, 23, 42, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 50px rgba(15, 23, 42, 0.12);
+}
+
+.feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+@media (max-width: 576px) {
+    .auth-card {
+        padding: 2rem !important;
+    }
+}
