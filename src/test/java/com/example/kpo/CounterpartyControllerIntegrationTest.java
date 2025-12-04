@@ -6,6 +6,7 @@ import com.example.kpo.entity.Counterparty;
 import com.example.kpo.repository.AdminRepository;
 import com.example.kpo.repository.CounterpartyRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.kpo.repository.MovementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,8 +52,12 @@ class CounterpartyControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private MovementRepository movementRepository;
+
     @BeforeEach
     void setUp() {
+        movementRepository.deleteAll();
         counterpartyRepository.deleteAll();
         adminRepository.deleteAll();
 

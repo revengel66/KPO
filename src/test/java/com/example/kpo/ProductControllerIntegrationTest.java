@@ -7,6 +7,7 @@ import com.example.kpo.entity.Warehouse;
 import com.example.kpo.repository.AdminRepository;
 import com.example.kpo.repository.ProductRepository;
 import com.example.kpo.repository.WarehouseRepository;
+import com.example.kpo.repository.MovementRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +48,9 @@ class ProductControllerIntegrationTest {
     private WarehouseRepository warehouseRepository;
 
     @Autowired
+    private MovementRepository movementRepository;
+
+    @Autowired
     private AdminRepository adminRepository;
 
     @Autowired
@@ -57,6 +61,7 @@ class ProductControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        movementRepository.deleteAll();
         productRepository.deleteAll();
         warehouseRepository.deleteAll();
         adminRepository.deleteAll();

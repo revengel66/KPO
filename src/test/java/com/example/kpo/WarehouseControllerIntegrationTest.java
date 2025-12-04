@@ -5,6 +5,7 @@ import com.example.kpo.entity.Admin;
 import com.example.kpo.entity.Warehouse;
 import com.example.kpo.repository.AdminRepository;
 import com.example.kpo.repository.WarehouseRepository;
+import com.example.kpo.repository.MovementRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,8 +51,12 @@ class WarehouseControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private MovementRepository movementRepository;
+
     @BeforeEach
     void setUp() {
+        movementRepository.deleteAll();
         warehouseRepository.deleteAll();
         adminRepository.deleteAll();
 
