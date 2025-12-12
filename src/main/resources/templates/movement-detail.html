@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${movementDetailTitle} + ' — движение'">Движение</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="bg-light">
+<th:block th:replace="fragments/layout :: appHeader('movements')"></th:block>
+<main class="movement-detail-wrapper py-5"
+      id="movementDetailPage"
+      th:attr="data-movement-type=${movementDetailType},data-detail-title=${movementDetailTitle},data-return-path=${movementDetailPath}">
+    <div class="container">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+            <div>
+                <p class="text-uppercase text-muted small mb-1">Учёт операций</p>
+                <h1 class="h4 mb-0" th:text="${movementDetailTitle}">Движение</h1>
+            </div>
+            <a th:href="@{${movementDetailPath}}" class="btn btn-outline-dark d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>К движениям</span>
+            </a>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-lg-7">
+                <section class="movement-detail-card h-100">
+                    <div>
+                        <p class="text-uppercase text-muted small mb-1">Операция</p>
+                        <h1 class="h4 mb-0" id="movementDetailTitle">Операция</h1>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h5 mb-0">Список товаров</h2>
+                            <button type="button" class="btn btn-dark btn-sm d-inline-flex align-items-center gap-2"
+                                    id="movementAddItemButton">
+                                <i class="bi bi-plus-lg"></i>
+                                Добавить
+                            </button>
+                        </div>
+                        <div id="movementItemsLoader" class="text-center py-5">
+                            <div class="spinner-border text-dark" role="status" aria-hidden="true"></div>
+                            <p class="text-muted mt-3 mb-0">Загружаем товары...</p>
+                        </div>
+                        <div id="movementItemsEmpty" class="warehouse-empty-state d-none text-center py-5">
+                            <div class="warehouse-empty-icon text-dark mb-3">
+                                <i class="bi bi-box-seam h2 mb-0"></i>
+                            </div>
+                            <h3 class="h5 mb-1">Товаров нет</h3>
+                            <p class="text-muted mb-0">Добавьте товары в операцию.</p>
+                        </div>
+                        <div class="table-responsive d-none" id="movementItemsTableWrapper">
+                            <table class="table align-middle movement-items-table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Название товара</th>
+                                    <th scope="col" class="text-end">Количество (шт)</th>
+                                    <th scope="col" class="text-end">Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody id="movementItemsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="col-12 col-lg-5">
+                <section class="movement-info-panel">
+                    <div class="movement-info-group">
+                        <div class="movement-info-item">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-calendar-event"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1">Дата</p>
+                                <p class="mb-0" id="movementInfoDate">—</p>
+                            </div>
+                        </div>
+                        <div class="movement-info-item" data-field="warehouse">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1" data-detail-label="warehouse"><span data-label-text>Склад</span></p>
+                                <p class="mb-0" id="movementInfoWarehouse">—</p>
+                            </div>
+                        </div>
+                        <div class="movement-info-item" data-field="targetWarehouse">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-arrow-right-circle"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1" data-detail-label="targetWarehouse"><span data-label-text>Склад приёмки</span></p>
+                                <p class="mb-0" id="movementInfoTargetWarehouse">—</p>
+                            </div>
+                        </div>
+                        <div class="movement-info-item" data-field="counterparty">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-briefcase"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1" data-detail-label="counterparty"><span data-label-text>Контрагент</span></p>
+                                <p class="mb-0" id="movementInfoCounterparty">—</p>
+                            </div>
+                        </div>
+                        <div class="movement-info-item" data-field="employee">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1" id="movementEmployeeLabel" data-detail-label="employee"><span data-label-text>Сотрудник</span></p>
+                                <p class="mb-0" id="movementInfoEmployee">—</p>
+                            </div>
+                        </div>
+                        <div class="movement-info-item" data-field="targetEmployee">
+                            <div class="movement-info-icon">
+                                <i class="bi bi-person-check"></i>
+                            </div>
+                            <div>
+                                <p class="text-uppercase text-muted small mb-1" id="movementTargetEmployeeLabel" data-detail-label="targetEmployee"><span data-label-text>Сотрудник приёмки</span></p>
+                                <p class="mb-0" id="movementInfoTargetEmployee">—</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-uppercase text-muted small mb-1">Описание</p>
+                        <p class="mb-0 text-body-secondary" id="movementInfoDescription">Информация отсутствует.</p>
+                    </div>
+                    <div class="mt-4 d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline-dark d-inline-flex align-items-center gap-2"
+                                id="movementEditButton">
+                            <i class="bi bi-pencil"></i>
+                            <span>Редактировать</span>
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-dark d-inline-flex align-items-center gap-2 text-danger border-danger"
+                                id="movementDeleteButton">
+                            <i class="bi bi-trash"></i>
+                            <span>Удалить</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</main>
+<div class="modal fade" id="movementDetailEditModal" tabindex="-1" aria-labelledby="movementDetailEditModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-spacious border-0 rounded-4 shadow">
+            <button type="button" class="btn-close modal-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            <div class="modal-header border-0 justify-content-center pt-0">
+                <h2 class="modal-title fs-4 text-center w-100 mb-0" id="movementDetailEditModalLabel">Редактировать операцию</h2>
+            </div>
+            <div class="modal-body pt-3">
+                <form id="movementDetailEditForm" class="needs-validation movement-form" novalidate>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6" data-field="date">
+                            <label for="movementDetailEditDate" class="form-label modal-field-label" data-label-field="date">
+                                <span data-label-text>Дата</span>
+                                <span class="text-danger" data-required-indicator>*</span>
+                            </label>
+                            <input type="datetime-local" class="form-control" id="movementDetailEditDate" name="date" step="60" required>
+                            <div class="invalid-feedback">Укажите дату операции.</div>
+                        </div>
+                        <div class="col-12 col-sm-6" data-field="warehouse">
+                            <label for="movementDetailEditWarehouse" class="form-label modal-field-label" data-label-field="warehouse">
+                                <span data-label-text>Склад</span>
+                                <span class="text-danger" data-required-indicator>*</span>
+                            </label>
+                            <select class="form-select" id="movementDetailEditWarehouse" name="warehouseId" required>
+                                <option value="" disabled>Выберите склад</option>
+                            </select>
+                            <div class="invalid-feedback">Выберите склад.</div>
+                        </div>
+                        <div class="col-12 col-sm-6" data-field="targetWarehouse">
+                            <label for="movementDetailEditTargetWarehouse" class="form-label modal-field-label" data-label-field="targetWarehouse">
+                                <span data-label-text>Склад приёмки</span>
+                            </label>
+                            <select class="form-select" id="movementDetailEditTargetWarehouse" name="targetWarehouseId" required>
+                                <option value="" disabled>Выберите склад приёмки</option>
+                            </select>
+                            <div class="invalid-feedback">Выберите склад приёмки.</div>
+                        </div>
+                        <div class="col-12 col-sm-6" data-field="counterparty">
+                            <label for="movementDetailEditCounterparty" class="form-label modal-field-label" data-label-field="counterparty">
+                                <span data-label-text>Контрагент</span>
+                            </label>
+                            <select class="form-select" id="movementDetailEditCounterparty" name="counterpartyId" required>
+                                <option value="" disabled>Выберите контрагента</option>
+                            </select>
+                            <div class="invalid-feedback">Выберите контрагента.</div>
+                        </div>
+                        <div class="col-12 col-sm-6" data-field="employee">
+                            <label for="movementDetailEditEmployee" class="form-label modal-field-label" data-label-field="employee">
+                                <span data-label-text>Сотрудник</span>
+                            </label>
+                            <select class="form-select" id="movementDetailEditEmployee" name="employeeId" required>
+                                <option value="" disabled>Выберите сотрудника</option>
+                            </select>
+                            <div class="invalid-feedback">Выберите сотрудника.</div>
+                        </div>
+                        <div class="col-12 col-sm-6" data-field="targetEmployee">
+                            <label for="movementDetailEditTargetEmployee" class="form-label modal-field-label" data-label-field="targetEmployee">
+                                <span data-label-text>Сотрудник приёмки</span>
+                            </label>
+                            <select class="form-select" id="movementDetailEditTargetEmployee" name="targetEmployeeId" required>
+                                <option value="" disabled>Выберите сотрудника приёмки</option>
+                            </select>
+                            <div class="invalid-feedback">Выберите сотрудника приёмки.</div>
+                        </div>
+                        <div class="col-12">
+                            <label for="movementDetailEditInfo" class="form-label modal-field-label">Описание</label>
+                            <textarea class="form-control" id="movementDetailEditInfo" name="info" rows="2"
+                                      placeholder="Дополнительная информация (необязательно)"></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-sm-row gap-3 pt-4">
+                        <button type="button" class="btn btn-outline-dark flex-fill" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-dark flex-fill" id="movementDetailEditSubmit">
+                            <span class="default-text">Сохранить</span>
+                            <span class="spinner-border spinner-border-sm align-middle ms-2 d-none" role="status"
+                                  aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="movementItemModal" tabindex="-1" aria-labelledby="movementItemModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-spacious border-0 rounded-4 shadow">
+            <button type="button" class="btn-close modal-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            <div class="modal-header border-0 justify-content-center pt-0">
+                <h2 class="modal-title fs-5 text-center w-100 mb-0" id="movementItemModalLabel">Добавить товар</h2>
+            </div>
+            <div class="modal-body pt-3">
+                <form id="movementItemForm" class="needs-validation" novalidate>
+                    <div class="mb-4">
+                        <label for="movementItemProductSearch" class="form-label modal-field-label">
+                            Товар <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="movementItemProductSearch"
+                               placeholder="Введите название товара" list="movementItemProductSuggestions" autocomplete="off" required>
+                        <datalist id="movementItemProductSuggestions"></datalist>
+                        <input type="hidden" id="movementItemProductId" name="productId">
+                        <div class="form-text">Начните вводить название и выберите товар из подсказок.</div>
+                        <button type="button" class="btn btn-link px-0 mt-2" id="movementItemCreateProductToggle">
+                            Нет подходящего товара? Создать
+                        </button>
+                    </div>
+                    <div class="border rounded-3 p-3 mb-4 d-none" id="movementItemNewProduct">
+                        <h3 class="h6 fw-semibold mb-3">Новый товар</h3>
+                        <div class="mb-3">
+                            <label for="movementItemNewProductName" class="form-label modal-field-label">
+                                Название товара <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="movementItemNewProductName"
+                                   placeholder="Введите название товара">
+                        </div>
+                        <div class="mb-3">
+                            <label for="movementItemNewProductCategory" class="form-label modal-field-label">
+                                Категория <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="movementItemNewProductCategory">
+                                <option value="" disabled selected>Выберите категорию</option>
+                            </select>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <button type="button" class="btn btn-outline-dark flex-fill" id="movementItemCancelNewProduct">
+                                Отмена
+                            </button>
+                            <button type="button" class="btn btn-dark flex-fill" id="movementItemSaveNewProduct">
+                                Сохранить товар
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="movementItemQuantity" class="form-label modal-field-label">
+                            Количество, шт <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="movementItemQuantity" name="quantity"
+                               min="1" step="1" inputmode="numeric" pattern="\d*" required>
+                        <div class="invalid-feedback">Укажите количество.</div>
+                    </div>
+                    <div class="d-flex flex-column flex-sm-row gap-3 pt-2">
+                        <button type="button" class="btn btn-outline-dark flex-fill" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-dark flex-fill" id="movementItemSubmit">
+                            <span class="default-text">Сохранить</span>
+                            <span class="spinner-border spinner-border-sm align-middle ms-2 d-none" role="status"
+                                  aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="movementDetailAlertModal" tabindex="-1" aria-labelledby="movementDetailAlertTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-spacious border-0 rounded-4 shadow">
+            <button type="button" class="btn-close modal-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            <div class="modal-header border-0 justify-content-center pt-0">
+                <h2 class="modal-title fs-5 text-center w-100 mb-0" id="movementDetailAlertTitle"
+                    data-modal="title">Сообщение</h2>
+            </div>
+            <div class="modal-body text-body-secondary pt-3 pb-0" data-modal="body">
+                Обработка запроса...
+            </div>
+            <div class="modal-footer border-0 flex-column flex-sm-row gap-2 pt-3">
+                <button type="button" class="btn btn-outline-dark w-100" data-bs-dismiss="modal"
+                        data-modal="close">Закрыть</button>
+                <button type="button" class="btn btn-dark w-100 d-none" data-modal="action"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="fragments/layout :: logoutModal"></th:block>
+<th:block th:replace="fragments/layout :: baseScripts"></th:block>
+</body>
+</html>

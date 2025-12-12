@@ -2,9 +2,14 @@ package com.example.kpo;
 
 import com.example.kpo.dto.LoginRequest;
 import com.example.kpo.entity.Admin;
+import com.example.kpo.entity.Category;
+import com.example.kpo.entity.Product;
 import com.example.kpo.entity.Warehouse;
+import com.example.kpo.entity.WarehouseProduct;
 import com.example.kpo.repository.AdminRepository;
+import com.example.kpo.repository.CategoryRepository;
 import com.example.kpo.repository.MovementRepository;
+import com.example.kpo.repository.ProductRepository;
 import com.example.kpo.repository.WarehouseProductRepository;
 import com.example.kpo.repository.WarehouseRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +49,12 @@ class WarehouseControllerIntegrationTest {
     private WarehouseRepository warehouseRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private AdminRepository adminRepository;
 
     @Autowired
@@ -62,7 +73,9 @@ class WarehouseControllerIntegrationTest {
     void setUp() {
         movementRepository.deleteAll();
         warehouseProductRepository.deleteAll();
+        productRepository.deleteAll();
         warehouseRepository.deleteAll();
+        categoryRepository.deleteAll();
         adminRepository.deleteAll();
 
         Admin admin = new Admin();
@@ -157,6 +170,27 @@ class WarehouseControllerIntegrationTest {
                 .andExpect(jsonPath("$.name", is("Warehouse name is required")));
 
         assertThat(warehouseRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("GET /warehouses/{id}/products возвращает товары склада")
+    void getWarehouseProductsReturnsProducts() throws Exception {
+        Warehouse warehouse = warehouseRepository.save(new Warehouse(null, "Склад", "описание"));
+        Category category = categoryRepository.save(new Category(null, "Категория"));
+        Product product = new Product();
+        product.setName("Товар");
+        product.setInfo("описание товара");
+        product.setCategory(category);
+        product = productRepository.save(product);
+        warehouseProductRepository.save(new WarehouseProduct(warehouse, product, 7));
+
+        mockMvc.perform(get("/warehouses/{id}/products", warehouse.getId())
+                        .header("Authorization", "Bearer " + obtainToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].productId", is(product.getId().intValue())))
+                .andExpect(jsonPath("$[0].name", is("Товар")))
+                .andExpect(jsonPath("$[0].quantity", is(7)));
     }
 
     @Test
