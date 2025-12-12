@@ -113,6 +113,10 @@
         if (!root) {
             return;
         }
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = '/login';
+            return;
+        }
 
         const movementType = root.dataset.movementType;
         const config = MOVEMENT_CONFIG[movementType];
@@ -397,6 +401,10 @@
     function initMovementDetailPage() {
         const root = document.getElementById('movementDetailPage');
         if (!root) {
+            return;
+        }
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = '/login';
             return;
         }
 
