@@ -31,7 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -261,7 +261,7 @@ class MovementControllerIntegrationTest {
                                           Product product,
                                           int quantity) {
         Movement movement = new Movement();
-        movement.setDate(LocalDate.now());
+        movement.setDate(LocalDateTime.now());
         movement.setType(type);
         movement.setInfo(info);
         movement.setWarehouse(warehouse);
@@ -286,7 +286,7 @@ class MovementControllerIntegrationTest {
                                           Product product,
                                           int quantity) {
         Movement movement = new Movement();
-        movement.setDate(LocalDate.now());
+        movement.setDate(LocalDateTime.now());
         movement.setType(type);
         movement.setWarehouse(refWarehouse(warehouse));
         movement.setTargetWarehouse(targetWarehouse != null ? refWarehouse(targetWarehouse) : null);

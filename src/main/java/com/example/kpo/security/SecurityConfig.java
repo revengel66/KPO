@@ -27,7 +27,29 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/dashboard",
+                                "/warehouses/page",
+                                "/categories/page",
+                                "/products/page",
+                                "/counterparties/page",
+                                "/employees/page",
+                                "/movements/page",
+                                "/deliveries",
+                                "/deliveries/**",
+                                "/shipments",
+                                "/shipments/**",
+                                "/transfers",
+                                "/transfers/**",
+                                "/warehouse/**",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/webjars/**",
+                                "/auth/login"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(login -> login.disable())

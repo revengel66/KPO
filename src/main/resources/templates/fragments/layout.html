@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fragments</title>
+</head>
+<body>
+<th:block th:fragment="appHeader(activePage)">
+    <header class="dashboard-header border-bottom bg-white">
+        <div class="container py-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <nav class="dashboard-nav d-flex align-items-center flex-wrap gap-3">
+                <a class="nav-link px-0 d-inline-flex align-items-center text-dark"
+                   th:classappend="${activePage} == 'dashboard' ? ' active fw-semibold' : ''"
+                   th:href="@{/dashboard}">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Панель
+                </a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'warehouses' ? ' active fw-semibold' : ''"
+                   th:href="@{/warehouses/page}">Склады</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'categories' ? ' active fw-semibold' : ''"
+                   th:href="@{/categories/page}">Категории</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'products' ? ' active fw-semibold' : ''"
+                   th:href="@{/products/page}">Товары</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'counterparties' ? ' active fw-semibold' : ''"
+                   th:href="@{/counterparties/page}">Контрагенты</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'employees' ? ' active fw-semibold' : ''"
+                   th:href="@{/employees/page}">Сотрудники</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'movements' ? ' active fw-semibold' : ''"
+                   th:href="@{/movements/page}">Движения</a>
+
+            </nav>
+            <button class="btn btn-outline-dark px-4" type="button" data-bs-toggle="modal"
+                    data-bs-target="#logoutModal">Выйти</button>
+        </div>
+    </header>
+</th:block>
+
+<th:block th:fragment="logoutModal">
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-spacious border-0 rounded-4 shadow">
+                <button type="button" class="btn-close modal-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                <div class="modal-header border-0 justify-content-center pt-0">
+                    <h2 class="modal-title fs-5 text-center w-100 mb-0" id="logoutModalLabel">Выход из системы</h2>
+                </div>
+                <div class="modal-body pt-3">
+                    Вы действительно хотите выйти?
+                </div>
+                <div class="modal-footer border-0 d-flex pt-3 flex-nowrap justify-content-end">
+                    <button type="button" class="btn btn-outline-dark px-4" data-bs-dismiss="modal">Отменить</button>
+                    <a class="btn btn-dark px-4" th:href="@{/login}">Выйти</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<div id="appToastContainer" class="app-toast-container"></div>
+
+<th:block th:fragment="baseScripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <script th:src="@{/js/main.js}"></script>
+    <script th:src="@{/js/movements.js}"></script>
+</th:block>
+</body>
+</html>

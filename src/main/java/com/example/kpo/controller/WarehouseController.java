@@ -1,9 +1,11 @@
 package com.example.kpo.controller;
 
+import com.example.kpo.dto.WarehouseProductResponse;
 import com.example.kpo.entity.Warehouse;
 import com.example.kpo.service.WarehouseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/warehouses")
+@RequestMapping(value = "/warehouses", produces = MediaType.APPLICATION_JSON_VALUE)
 public class WarehouseController {
     private final WarehouseService warehouseService;
 
@@ -34,6 +36,13 @@ public class WarehouseController {
     public ResponseEntity<Warehouse> getWarehouseById(@PathVariable Long id) {
         return warehouseService.getWarehouseById(id)
                 .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/products")
+    public ResponseEntity<List<WarehouseProductResponse>> getWarehouseProducts(@PathVariable Long id) {
+        return warehouseService.getWarehouseById(id)
+                .map(warehouse -> ResponseEntity.ok(warehouseService.getWarehouseProducts(warehouse)))
                 .orElse(ResponseEntity.notFound().build());
     }
 

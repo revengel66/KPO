@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class Movement {
 
     @NotNull(message = "Movement date is required")
     @Column(nullable = false)
-    private LocalDate date;
+    private LocalDateTime date;
 
     @NotNull(message = "Movement type is required")
     @Enumerated(EnumType.STRING)
@@ -69,7 +69,7 @@ public class Movement {
     }
 
     public Movement(Long id,
-                    LocalDate date,
+                    LocalDateTime date,
                     MovementType type,
                     String info,
                     Employee employee,
@@ -100,11 +100,11 @@ public class Movement {
         this.id = id;
     }
 
-    public LocalDate getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(LocalDateTime date) {
         this.date = date;
     }
 

@@ -1,6 +1,7 @@
 package com.example.kpo.controller;
 
 import com.example.kpo.entity.Movement;
+import com.example.kpo.entity.MovementType;
 import com.example.kpo.service.MovementService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,7 +29,10 @@ public class MovementController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Movement>> getAllMovements() {
+    public ResponseEntity<List<Movement>> getAllMovements(@RequestParam(value = "type", required = false) MovementType type) {
+        if (type != null) {
+            return ResponseEntity.ok(movementService.getMovementsByType(type));
+        }
         return ResponseEntity.ok(movementService.getAllMovements());
     }
 

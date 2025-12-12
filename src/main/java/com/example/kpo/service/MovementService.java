@@ -50,6 +50,10 @@ public class MovementService {
         return movementRepository.findAll();
     }
 
+    public List<Movement> getMovementsByType(MovementType type) {
+        return movementRepository.findByType(type);
+    }
+
     public Optional<Movement> getMovementById(Long id) {
         return movementRepository.findById(id);
     }
@@ -94,21 +98,20 @@ public class MovementService {
         target.setTargetWarehouse(resolveOptionalWarehouse(source.getTargetWarehouse(), "targetWarehouse"));
         target.getItems().clear();
         List<MovementProduct> incomingItems = source.getItems();
-        if (incomingItems == null || incomingItems.isEmpty()) {
-            throw new IllegalArgumentException("Movement items are required");
-        }
-        List<MovementProduct> resolvedItems = new ArrayList<>();
-        for (MovementProduct item : incomingItems) {
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Movement item quantity must be greater than 0");
+        if (incomingItems != null && !incomingItems.isEmpty()) {
+            List<MovementProduct> resolvedItems = new ArrayList<>();
+            for (MovementProduct item : incomingItems) {
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                    throw new IllegalArgumentException("Movement item quantity must be greater than 0");
+                }
+                MovementProduct resolved = new MovementProduct();
+                resolved.setMovement(target);
+                resolved.setProduct(resolveProduct(item.getProduct()));
+                resolved.setQuantity(item.getQuantity());
+                resolvedItems.add(resolved);
             }
-            MovementProduct resolved = new MovementProduct();
-            resolved.setMovement(target);
-            resolved.setProduct(resolveProduct(item.getProduct()));
-            resolved.setQuantity(item.getQuantity());
-            resolvedItems.add(resolved);
+            target.getItems().addAll(resolvedItems);
         }
-        target.getItems().addAll(resolvedItems);
     }
 
     private Product resolveProduct(Product product) {
@@ -175,9 +178,6 @@ public class MovementService {
         }
         if (type == null) {
             throw new IllegalArgumentException("Movement type is required");
-        }
-        if (movement.getItems() == null || movement.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Movement items are required");
         }
         switch (type) {
             case INBOUND -> validateInbound(movement);
@@ -262,7 +262,12 @@ public class MovementService {
             throw new IllegalArgumentException("Not enough product " + product.getId()
                     + " on warehouse " + warehouse.getId());
         }
-        stock.setQuantity(stock.getQuantity() - quantity);
-        warehouseProductRepository.save(stock);
+        int nextQuantity = stock.getQuantity() - quantity;
+        if (nextQuantity <= 0) {
+            warehouseProductRepository.delete(stock);
+        } else {
+            stock.setQuantity(nextQuantity);
+            warehouseProductRepository.save(stock);
+        }
     }
 }
