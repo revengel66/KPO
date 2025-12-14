@@ -229,9 +229,8 @@ class MovementControllerIntegrationTest {
 
         Movement refreshed = movementRepository.findById(existingId).orElseThrow();
         assertThat(refreshed.getInfo()).isEqualTo("обновлено");
-        WarehouseProduct sourceStock = warehouseProductRepository.findByWarehouseAndProduct(sourceWarehouse, product).orElseThrow();
+        assertThat(warehouseProductRepository.findByWarehouseAndProduct(sourceWarehouse, product)).isEmpty();
         WarehouseProduct newStock = warehouseProductRepository.findByWarehouseAndProduct(targetWarehouse, product).orElseThrow();
-        assertThat(sourceStock.getQuantity()).isEqualTo(0);
         assertThat(newStock.getQuantity()).isEqualTo(6);
     }
 
@@ -247,8 +246,7 @@ class MovementControllerIntegrationTest {
                 .andExpect(status().isNoContent());
 
         assertThat(movementRepository.findById(movementId)).isEmpty();
-        WarehouseProduct stock = warehouseProductRepository.findByWarehouseAndProduct(sourceWarehouse, product).orElseThrow();
-        assertThat(stock.getQuantity()).isEqualTo(0);
+        assertThat(warehouseProductRepository.findByWarehouseAndProduct(sourceWarehouse, product)).isEmpty();
     }
 
     private Movement createMovementEntity(MovementType type,
