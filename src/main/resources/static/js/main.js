@@ -1248,8 +1248,7 @@
         const downloadButton = document.getElementById('reportDownloadBtn');
         const downloadSpinner = downloadButton ? downloadButton.querySelector('.spinner-border') : null;
         const resetButton = document.getElementById('reportResetBtn');
-        const startDateInput = document.getElementById('reportStartDate');
-        const endDateInput = document.getElementById('reportEndDate');
+        const reportDateInput = document.getElementById('reportDate');
         const feedbackModal = createFeedbackModal('reportsAlertModal');
         const toast = window.showAppToast || (() => undefined);
 
@@ -1306,8 +1305,7 @@
             }
             toggleLoading(true);
             const payload = {
-                startDate: startDateInput?.value || null,
-                endDate: endDateInput?.value || null,
+                reportDate: reportDateInput?.value || null,
                 warehouseIds: collectSelected(warehouseSelect),
                 categoryIds: collectSelected(categorySelect)
             };
@@ -1351,8 +1349,7 @@
         });
 
         resetButton?.addEventListener('click', () => {
-            startDateInput && (startDateInput.value = '');
-            endDateInput && (endDateInput.value = '');
+            reportDateInput && (reportDateInput.value = '');
             [warehouseSelect, categorySelect].forEach((select) => {
                 if (select) {
                     Array.from(select.options).forEach((option) => {
