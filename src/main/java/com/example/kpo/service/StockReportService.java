@@ -144,8 +144,22 @@ public class StockReportService {
                 : null;
         Set<Long> warehouseFilter = new HashSet<>(normalizeIds(request.getWarehouseIds()));
         Set<Long> categoryFilter = new HashSet<>(normalizeIds(request.getCategoryIds()));
+        if (!warehouseFilter.isEmpty()) {
+            Set<Long> existingWarehouseIds = warehouseRepository.findAllById(warehouseFilter).stream()
+                    .map(Warehouse::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            warehouseFilter.retainAll(existingWarehouseIds);
+        }
+        if (!categoryFilter.isEmpty()) {
+            Set<Long> existingCategoryIds = categoryRepository.findAllById(categoryFilter).stream()
+                    .map(Category::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            categoryFilter.retainAll(existingCategoryIds);
+        }
 
-        List<Movement> movements = movementRepository.findAllForReport(reportMoment);
+        List<Movement> movements = new ArrayList<>(movementRepository.findAllForReport(reportMoment));
         movements.sort(Comparator.comparing(Movement::getDate));
 
         Map<StockKey, Integer> totals = new LinkedHashMap<>();
@@ -176,7 +190,7 @@ public class StockReportService {
             }
         }
 
-        return totals.entrySet().stream()
+        List<StockRow> stockRows = totals.entrySet().stream()
                 .map(entry -> new StockRow(entry.getKey().warehouse, entry.getKey().product, entry.getValue()))
                 .filter(row -> row.quantity() > 0)
                 .filter(row -> filterRow(row, warehouseFilter, categoryFilter))
@@ -185,6 +199,7 @@ public class StockReportService {
                         .thenComparing(StockRow::categoryName, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(StockRow::productName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+        return stockRows;
     }
 
     private List<Long> normalizeIds(List<Long> ids) {

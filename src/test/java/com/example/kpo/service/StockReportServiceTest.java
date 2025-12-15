@@ -80,8 +80,8 @@ class StockReportServiceTest {
                 .thenComparing(this::categoryName)
                 .thenComparing(this::productName));
 
-        assertRow(rows.get(0), "Склад A", "Электроника", "Сканер", 7);
-        assertRow(rows.get(1), "Склад A", "Мебель", "Стол", 3);
+        assertRow(rows.get(0), "Склад A", "Мебель", "Стол", 3);
+        assertRow(rows.get(1), "Склад A", "Электроника", "Сканер", 7);
         assertRow(rows.get(2), "Склад B", "Мебель", "Стол", 2);
 
         byte[] pdf = stockReportService.generateStockReport(request);
