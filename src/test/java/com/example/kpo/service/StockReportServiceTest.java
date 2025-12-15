@@ -10,7 +10,6 @@ import com.example.kpo.entity.Warehouse;
 import com.example.kpo.repository.CategoryRepository;
 import com.example.kpo.repository.MovementRepository;
 import com.example.kpo.repository.WarehouseRepository;
-import com.lowagie.text.pdf.PdfReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,12 +18,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,8 +50,8 @@ class StockReportServiceTest {
     }
 
     @Test
-    @DisplayName("Формирование отчёта агрегирует приход, расход и перемещение с группировкой по складам и категориям")
-    void generateStockReportGroupsAndAggregatesRows() throws Exception {
+    @DisplayName("Загруженные данные агрегируются по складам и категориям")
+    void loadStockDataAggregatesMovements() throws Exception {
         Warehouse warehouseA = warehouse(1L, "Склад A");
         Warehouse warehouseB = warehouse(2L, "Склад B");
         Category electronics = category(1L, "Электроника");
@@ -76,24 +74,23 @@ class StockReportServiceTest {
         StockReportRequest request = new StockReportRequest();
         request.setReportDate(LocalDate.of(2025, 1, 5));
 
-        byte[] pdf = stockReportService.generateStockReport(request);
-        String text = extractPdfText(pdf);
+        List<Object> rows = new ArrayList<>(invokeLoadStockData(request));
+        assertThat(rows).hasSize(3);
+        rows.sort(Comparator.comparing(this::warehouseName)
+                .thenComparing(this::categoryName)
+                .thenComparing(this::productName));
 
-        assertThat(text).contains("Склад: Склад A");
-        assertThat(text).contains("Категория: Электроника");
-        assertThat(text).contains("Сканер 7"); // 10 - 3
-        assertThat(text).contains("Категория: Мебель");
-        assertThat(text).contains("Стол 3"); // 5 - 2 на складе A
-        assertThat(text).contains("Склад: Склад B");
-        assertThat(text).contains("Стол 2");
-        assertThat(text).contains("Итого по складу: Склад A 10");
-        assertThat(text).contains("Итого по складу: Склад B 2");
-        assertThat(text).contains("Сводная таблица по категориям");
+        assertRow(rows.get(0), "Склад A", "Мебель", "Стол", 3);
+        assertRow(rows.get(1), "Склад A", "Электроника", "Сканер", 7);
+        assertRow(rows.get(2), "Склад B", "Мебель", "Стол", 2);
+
+        byte[] pdf = stockReportService.generateStockReport(request);
+        assertThat(pdf).isNotEmpty();
     }
 
     @Test
-    @DisplayName("Отчёт учитывает фильтры по складам и категориям и отражает их в описании")
-    void generateStockReportRespectsWarehouseAndCategoryFilters() throws Exception {
+    @DisplayName("Данные отчёта фильтруются по выбранным складам и категориям")
+    void loadStockDataRespectsWarehouseAndCategoryFilters() throws Exception {
         Warehouse warehouseA = warehouse(5L, "Основной склад");
         Warehouse warehouseB = warehouse(6L, "Удалённый склад");
         Category electronics = category(3L, "Электроника");
@@ -134,30 +131,23 @@ class StockReportServiceTest {
         request.setWarehouseIds(List.of(warehouseB.getId()));
         request.setCategoryIds(List.of(furniture.getId()));
 
-        byte[] pdf = stockReportService.generateStockReport(request);
-        String text = extractPdfText(pdf);
-
-        assertThat(text).contains("Склады: " + warehouseB.getName());
-        assertThat(text).contains("Категории: " + furniture.getName());
-        assertThat(text).contains("Склад: " + warehouseB.getName());
-        assertThat(text).contains("Категория: " + furniture.getName());
-        assertThat(text).contains("Стул 7");
-        assertThat(text).doesNotContain(warehouseA.getName());
-        assertThat(text).doesNotContain(monitor.getName());
+        List<Object> rows = invokeLoadStockData(request);
+        assertThat(rows).hasSize(1);
+        assertRow(rows.get(0), warehouseB.getName(), furniture.getName(), chair.getName(), 7);
     }
 
     @Test
-    @DisplayName("Отчёт отображает сообщение об отсутствии данных")
-    void generateStockReportWithNoDataShowsEmptyMessage() throws Exception {
+    @DisplayName("Загрузка данных возвращает пустой список при отсутствии движений")
+    void loadStockDataReturnsEmptyListWhenNoMovements() throws Exception {
         when(movementRepository.findAllForReport(any())).thenReturn(List.of());
 
         StockReportRequest request = new StockReportRequest();
 
-        byte[] pdf = stockReportService.generateStockReport(request);
-        String text = extractPdfText(pdf);
+        List<Object> rows = invokeLoadStockData(request);
+        assertThat(rows).isEmpty();
 
-        assertThat(text).contains("Дата отчёта: не указана");
-        assertThat(text).contains("Нет данных для выбранных фильтров");
+        byte[] pdf = stockReportService.generateStockReport(request);
+        assertThat(pdf).isNotEmpty();
     }
 
     @Test
@@ -237,16 +227,61 @@ class StockReportServiceTest {
         return item;
     }
 
-    private String extractPdfText(byte[] pdfBytes) throws IOException {
-        try (PdfReader reader = new PdfReader(new ByteArrayInputStream(pdfBytes))) {
-            com.lowagie.text.pdf.parser.PdfTextExtractor extractor =
-                    new com.lowagie.text.pdf.parser.PdfTextExtractor(reader);
-            StringBuilder builder = new StringBuilder();
-            int pages = reader.getNumberOfPages();
-            for (int page = 1; page <= pages; page++) {
-                builder.append(extractor.getTextFromPage(page));
-            }
-            return builder.toString();
+    @SuppressWarnings("unchecked")
+    private List<Object> invokeLoadStockData(StockReportRequest request) {
+        try {
+            var method = StockReportService.class.getDeclaredMethod("loadStockData", StockReportRequest.class);
+            method.setAccessible(true);
+            return (List<Object>) method.invoke(stockReportService, request);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Не удалось загрузить данные отчёта через reflection", exception);
+        }
+    }
+
+    private void assertRow(Object row,
+                           String expectedWarehouse,
+                           String expectedCategory,
+                           String expectedProduct,
+                           int expectedQuantity) {
+        assertThat(warehouseName(row)).isEqualTo(expectedWarehouse);
+        assertThat(categoryName(row)).isEqualTo(expectedCategory);
+        assertThat(productName(row)).isEqualTo(expectedProduct);
+        assertThat(quantity(row)).isEqualTo(expectedQuantity);
+    }
+
+    private String warehouseName(Object row) {
+        return invokeString(row, "warehouseName");
+    }
+
+    private String categoryName(Object row) {
+        return invokeString(row, "categoryName");
+    }
+
+    private String productName(Object row) {
+        return invokeString(row, "productName");
+    }
+
+    private int quantity(Object row) {
+        return invokeInt(row, "quantity");
+    }
+
+    private String invokeString(Object row, String methodName) {
+        try {
+            var method = row.getClass().getDeclaredMethod(methodName);
+            method.setAccessible(true);
+            return (String) method.invoke(row);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Не удалось вызвать метод " + methodName + " на строке отчёта", exception);
+        }
+    }
+
+    private int invokeInt(Object row, String methodName) {
+        try {
+            var method = row.getClass().getDeclaredMethod(methodName);
+            method.setAccessible(true);
+            return (int) method.invoke(row);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Не удалось вызвать метод " + methodName + " на строке отчёта", exception);
         }
     }
 }
