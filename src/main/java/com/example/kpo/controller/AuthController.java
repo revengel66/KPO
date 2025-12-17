@@ -3,8 +3,6 @@ package com.example.kpo.controller;
 import com.example.kpo.dto.AuthResponse;
 import com.example.kpo.dto.LoginRequest;
 import com.example.kpo.service.AuthService;
-import org.hibernate.internal.build.AllowNonPortable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +21,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> Authenticate(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> authenticate(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 

@@ -23,18 +23,18 @@ public class StockReportRequest {
     }
 
     public List<Long> getWarehouseIds() {
-        return warehouseIds;
+        return warehouseIds == null ? null : List.copyOf(warehouseIds);
     }
 
     public void setWarehouseIds(List<Long> warehouseIds) {
-        this.warehouseIds = warehouseIds;
+        this.warehouseIds = warehouseIds == null ? null : List.copyOf(warehouseIds);
     }
 
     public List<Long> getCategoryIds() {
-        return categoryIds;
+        return categoryIds == null ? null : List.copyOf(categoryIds);
     }
 
     public void setCategoryIds(List<Long> categoryIds) {
-        this.categoryIds = categoryIds;
+        this.categoryIds = categoryIds == null ? null : List.copyOf(categoryIds);
     }
 }

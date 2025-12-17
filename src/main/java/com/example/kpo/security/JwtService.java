@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
 
 @Service
@@ -18,8 +20,16 @@ public class JwtService {
     public JwtService(
             @Value("${jwt.secret-key}") String secret,
             @Value("${jwt.expiration-ms}") long expirationMs) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.key = createKey(secret);
         this.expirationMs = expirationMs;
+    }
+
+    private static Key createKey(String secret) {
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            keyBytes = Arrays.copyOf(keyBytes, 32);
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(String username) {

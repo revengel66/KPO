@@ -49,11 +49,11 @@ public class StockReportService {
     private final CategoryRepository categoryRepository;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    private final Font titleFont;
-    private final Font subtitleFont;
-    private final Font tableHeaderFont;
-    private final Font tableBodyFont;
-    private final Font sectionTitleFont;
+    private volatile Font titleFont;
+    private volatile Font subtitleFont;
+    private volatile Font tableHeaderFont;
+    private volatile Font tableBodyFont;
+    private volatile Font sectionTitleFont;
 
     public StockReportService(MovementRepository movementRepository,
                               WarehouseRepository warehouseRepository,
@@ -61,16 +61,10 @@ public class StockReportService {
         this.movementRepository = movementRepository;
         this.warehouseRepository = warehouseRepository;
         this.categoryRepository = categoryRepository;
-
-        BaseFont reportBaseFont = loadBaseFont();
-        this.titleFont = new Font(reportBaseFont, 16f, Font.BOLD);
-        this.subtitleFont = new Font(reportBaseFont, 11f, Font.NORMAL);
-        this.tableHeaderFont = new Font(reportBaseFont, 10f, Font.BOLD);
-        this.tableBodyFont = new Font(reportBaseFont, 10f, Font.NORMAL);
-        this.sectionTitleFont = new Font(reportBaseFont, 12f, Font.BOLD);
     }
 
     public byte[] generateStockReport(StockReportRequest request) {
+        ensureFontsLoaded();
         List<StockRow> stockRows = loadStockData(request);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
@@ -235,8 +229,6 @@ public class StockReportService {
         String currentCategory = null;
         int warehouseTotal = 0;
         for (StockRow stock : stockRows) {
-            Warehouse warehouse = stock.warehouse();
-            Product product = stock.product();
             String warehouseName = stock.warehouseName();
             if (!Objects.equals(currentWarehouse, warehouseName)) {
                 if (currentWarehouse != null) {
@@ -261,6 +253,23 @@ public class StockReportService {
         }
         if (currentWarehouse != null) {
             addWarehouseTotalRow(table, currentWarehouse, warehouseTotal);
+        }
+    }
+
+    private void ensureFontsLoaded() {
+        if (titleFont != null) {
+            return;
+        }
+        synchronized (this) {
+            if (titleFont != null) {
+                return;
+            }
+            BaseFont reportBaseFont = loadBaseFont();
+            this.titleFont = new Font(reportBaseFont, 16f, Font.BOLD);
+            this.subtitleFont = new Font(reportBaseFont, 11f, Font.NORMAL);
+            this.tableHeaderFont = new Font(reportBaseFont, 10f, Font.BOLD);
+            this.tableBodyFont = new Font(reportBaseFont, 10f, Font.NORMAL);
+            this.sectionTitleFont = new Font(reportBaseFont, 12f, Font.BOLD);
         }
     }
 

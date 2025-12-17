@@ -11,11 +11,11 @@ import java.util.List;
 @Table(name= "admin")
 public class Admin {
 
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-public Long id;
-public String username;
-public String password;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String username;
+    private String password;
 
     public Admin() {
     }
