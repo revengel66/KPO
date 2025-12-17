@@ -3,7 +3,9 @@ package com.example.kpo.service;
 import com.example.kpo.entity.Category;
 import com.example.kpo.entity.Product;
 import com.example.kpo.repository.CategoryRepository;
+import com.example.kpo.repository.MovementProductRepository;
 import com.example.kpo.repository.ProductRepository;
+import com.example.kpo.repository.WarehouseProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +17,17 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final MovementProductRepository movementProductRepository;
+    private final WarehouseProductRepository warehouseProductRepository;
 
     public ProductService(ProductRepository productRepository,
-                          CategoryRepository categoryRepository) {
+                          CategoryRepository categoryRepository,
+                          MovementProductRepository movementProductRepository,
+                          WarehouseProductRepository warehouseProductRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.movementProductRepository = movementProductRepository;
+        this.warehouseProductRepository = warehouseProductRepository;
     }
 
     public List<Product> getAllProducts() {
@@ -46,6 +54,10 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
+        if (movementProductRepository.existsByProductId(id)
+                || warehouseProductRepository.existsByProductId(id)) {
+            throw new IllegalArgumentException("Product is used in movements or stock and cannot be deleted");
+        }
         productRepository.deleteById(id);
     }
 
