@@ -36,6 +36,9 @@
                 <a class="nav-link px-0 text-dark"
                    th:classappend="${activePage} == 'reports' ? ' active fw-semibold' : ''"
                    th:href="@{/reports/page}">Отчёты</a>
+                <a class="nav-link px-0 text-dark"
+                   th:classappend="${activePage} == 'forecast' ? ' active fw-semibold' : ''"
+                   th:href="@{/forecasts/page}">Прогноз</a>
 
             </nav>
             <button class="btn btn-outline-dark px-4" type="button" data-bs-toggle="modal"

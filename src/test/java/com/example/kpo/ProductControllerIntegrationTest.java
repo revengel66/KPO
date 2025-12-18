@@ -4,11 +4,14 @@ import com.example.kpo.dto.LoginRequest;
 import com.example.kpo.entity.Admin;
 import com.example.kpo.entity.Category;
 import com.example.kpo.entity.Product;
+import com.example.kpo.entity.Warehouse;
+import com.example.kpo.entity.WarehouseProduct;
 import com.example.kpo.repository.AdminRepository;
 import com.example.kpo.repository.CategoryRepository;
 import com.example.kpo.repository.MovementRepository;
 import com.example.kpo.repository.ProductRepository;
 import com.example.kpo.repository.WarehouseProductRepository;
+import com.example.kpo.repository.WarehouseRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -55,6 +58,9 @@ class ProductControllerIntegrationTest {
     private WarehouseProductRepository warehouseProductRepository;
 
     @Autowired
+    private WarehouseRepository warehouseRepository;
+
+    @Autowired
     private AdminRepository adminRepository;
 
     @Autowired
@@ -69,6 +75,7 @@ class ProductControllerIntegrationTest {
     void setUp() {
         movementRepository.deleteAll();
         warehouseProductRepository.deleteAll();
+        warehouseRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
         adminRepository.deleteAll();
@@ -212,6 +219,22 @@ class ProductControllerIntegrationTest {
                 .andExpect(status().isNoContent());
 
         assertThat(productRepository.findById(product.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("DELETE /products/{id} возвращает 409 если товар используется в остатках")
+    void deleteProductReturnsConflictWhenInStock() throws Exception {
+        Product product = new Product(null, "В остатках", null);
+        product.setCategory(defaultCategory);
+        productRepository.save(product);
+
+        Warehouse warehouse = warehouseRepository.save(new Warehouse(null, "Склад тест", "info"));
+        warehouseProductRepository.save(new WarehouseProduct(warehouse, product, 5));
+
+        mockMvc.perform(delete("/products/{id}", product.getId())
+                        .header("Authorization", "Bearer " + obtainToken()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error", is("Cannot delete product that is referenced by movements or stock")));
     }
 
     @Test

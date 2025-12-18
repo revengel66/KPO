@@ -25,7 +25,7 @@
     <section class="dashboard-panel">
         <div class="container d-flex flex-column gap-3">
             <div class="row g-3">
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-6 col-lg-4">
                     <a class="feature-card d-flex align-items-center gap-3 h-100 text-decoration-none text-dark"
                        th:href="@{/movements/page}">
                         <div class="feature-icon">
@@ -37,7 +37,7 @@
                         </div>
                     </a>
                 </div>
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-6 col-lg-4">
                     <a class="feature-card d-flex align-items-center gap-3 h-100 text-decoration-none text-dark"
                        th:href="@{/reports/page}">
                         <div class="feature-icon">
@@ -46,6 +46,18 @@
                         <div>
                             <h3 class="h5 mb-1">Отчёты</h3>
                             <p class="mb-0 text-muted">Получение отчётов по остаткам товаров на складах</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a class="feature-card d-flex align-items-center gap-3 h-100 text-decoration-none text-dark"
+                       th:href="@{/forecasts/page}">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart-steps"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5 mb-1">Прогноз спроса</h3>
+                            <p class="mb-0 text-muted">Оценка будущих отгрузок по товарам</p>
                         </div>
                     </a>
                 </div>

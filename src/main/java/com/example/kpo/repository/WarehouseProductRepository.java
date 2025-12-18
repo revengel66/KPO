@@ -18,6 +18,8 @@ public interface WarehouseProductRepository extends JpaRepository<WarehouseProdu
 
     List<WarehouseProduct> findByWarehouse(Warehouse warehouse);
 
+    boolean existsByProduct(Product product);
+
     @Query("""
             SELECT wp FROM WarehouseProduct wp
             JOIN FETCH wp.warehouse w

@@ -640,6 +640,75 @@ body {
     }
 }
 
+.forecast-page .management-card {
+    position: relative;
+}
+
+.forecast-note {
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 1.25rem;
+    background: rgba(102, 58, 212, 0.08);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.forecast-note__badge {
+    background: #0f172a;
+    color: #fff;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.forecast-empty-state {
+    border-radius: 24px;
+    border: 1px dashed rgba(15, 23, 42, 0.2);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.forecast-kpi {
+    border-radius: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(15, 23, 42, 0.03);
+    padding: 1.25rem;
+    height: 100%;
+}
+
+.forecast-chart-wrapper {
+    border-radius: 24px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #fff;
+    padding: 1.5rem;
+    height: 360px;
+}
+
+.forecast-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.forecast-table-wrapper .table {
+    margin-bottom: 0;
+}
+
+.forecast-table tbody tr.forecast-row td:last-child {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+@media (max-width: 576px) {
+    .forecast-note {
+        flex-direction: column;
+    }
+    .forecast-chart-wrapper {
+        height: 280px;
+    }
+}
+
 
 @media (min-width: 1400px) {
     .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {

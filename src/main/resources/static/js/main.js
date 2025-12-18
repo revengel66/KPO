@@ -44,6 +44,7 @@
         initCounterpartiesPage();
         initEmployeesPage();
         initReportsPage();
+        initForecastPage();
         initPhoneMasks();
     };
 
@@ -1360,6 +1361,451 @@
         });
 
         loadReferences();
+    }
+
+    function initForecastPage() {
+        const root = document.getElementById('forecastPage');
+        if (!root) {
+            return;
+        }
+        if (!getToken()) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const form = document.getElementById('forecastForm');
+        const productSelect = document.getElementById('forecastProductSelect');
+        const historyInput = document.getElementById('forecastHistory');
+        const validationInput = document.getElementById('forecastValidation');
+        const horizonInput = document.getElementById('forecastHorizon');
+        const submitButton = document.getElementById('forecastSubmit');
+        const submitSpinner = submitButton ? submitButton.querySelector('.spinner-border') : null;
+        const emptyState = document.getElementById('forecastEmptyState');
+        const resultBody = document.getElementById('forecastResultBody');
+        const warning = document.getElementById('forecastWarning');
+        const selectedProduct = document.getElementById('forecastSelectedProduct');
+        const modelBadges = document.getElementById('forecastModelBadges');
+        const historyDaysValue = document.getElementById('forecastHistoryDays');
+        const historyRangeValue = document.getElementById('forecastHistoryRange');
+        const maeValue = document.getElementById('forecastMae');
+        const maeNote = document.getElementById('forecastMaeNote');
+        const mapeValue = document.getElementById('forecastMape');
+        const mapeNote = document.getElementById('forecastMapeNote');
+        const tableBody = document.getElementById('forecastTableBody');
+        const tableHint = document.getElementById('forecastTableHint');
+        const chartCanvas = document.getElementById('forecastChart');
+        const feedbackModal = createFeedbackModal('forecastAlertModal');
+        const toast = window.showAppToast || (() => undefined);
+
+        const integerFormatter = new Intl.NumberFormat('ru-RU');
+        const decimalFormatter = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 2});
+        const percentFormatter = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 2});
+        const tableHistoryLimit = 24;
+        const granularity = 'WEEK';
+        const isWeekly = granularity === 'WEEK';
+        const unitShort = 'нед.';
+        const unitLong = 'недель';
+        const unitAccusative = 'в неделю';
+
+        let forecastChart = null;
+        let products = [];
+
+        const toggleLoading = (state) => {
+            if (submitButton) {
+                submitButton.disabled = state;
+            }
+            if (submitSpinner) {
+                submitSpinner.classList.toggle('d-none', !state);
+            }
+        };
+
+        const formatDate = (value) => {
+            if (!value) {
+                return '—';
+            }
+            const date = value instanceof Date ? value : new Date(`${value}T00:00:00`);
+            if (Number.isNaN(date.getTime())) {
+                return value instanceof Date ? '—' : value;
+            }
+            return date.toLocaleDateString('ru-RU');
+        };
+
+        const formatInteger = (value) => {
+            if (value === null || value === undefined || Number.isNaN(value)) {
+                return '—';
+            }
+            return integerFormatter.format(value);
+        };
+
+        const formatDecimal = (value) => {
+            if (value === null || value === undefined || Number.isNaN(value)) {
+                return '—';
+            }
+            return decimalFormatter.format(value);
+        };
+
+        const formatPercent = (value) => {
+            if (value === null || value === undefined || Number.isNaN(value)) {
+                return '—';
+            }
+            return `${percentFormatter.format(value)}%`;
+        };
+
+        const findProductLabel = (productId) => {
+            const idNumber = Number(productId);
+            const product = products.find((item) => Number(item.id) === idNumber);
+            if (!product) {
+                return `Товар #${productId}`;
+            }
+            const category = product.category && product.category.name ? ` - ${product.category.name}` : '';
+            return `${product.name}${category}`;
+        };
+
+        const buildBadges = (items) => {
+            if (!modelBadges) {
+                return;
+            }
+            modelBadges.innerHTML = items
+                .filter((item) => item && item.label)
+                .map((item) => `<span class="badge rounded-pill text-bg-light border">${escapeHtml(item.label)}</span>`)
+                .join('');
+        };
+
+        const updateWarning = (text) => {
+            if (!warning) {
+                return;
+            }
+            if (!text) {
+                warning.classList.add('d-none');
+                warning.textContent = '';
+                return;
+            }
+            warning.textContent = text;
+            warning.classList.remove('d-none');
+        };
+
+        const renderChart = (history, forecast) => {
+            if (!chartCanvas || !window.Chart) {
+                return;
+            }
+
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+
+            const labels = history.map((point) => point.date).concat(forecast.map((point) => point.date));
+            const historyValues = history.map((point) => point.quantity);
+            const forecastValues = forecast.map((point) => point.value);
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#663AD4';
+
+            const datasets = [
+                {
+                    label: 'Факт',
+                    data: historyValues.concat(new Array(forecastValues.length).fill(null)),
+                    borderColor: '#0f172a',
+                    backgroundColor: 'rgba(15, 23, 42, 0.08)',
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHitRadius: 10
+                }
+            ];
+
+            if (forecastValues.length > 0) {
+                const forecastData = new Array(Math.max(historyValues.length - 1, 0)).fill(null)
+                    .concat(historyValues.length ? [historyValues[historyValues.length - 1]] : [])
+                    .concat(forecastValues);
+                datasets.push({
+                    label: 'Прогноз',
+                    data: forecastData,
+                    borderColor: accent,
+                    backgroundColor: 'rgba(102, 58, 212, 0.12)',
+                    borderDash: [6, 4],
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHitRadius: 10
+                });
+            }
+
+            forecastChart = new window.Chart(chartCanvas, {
+                type: 'line',
+                data: {labels, datasets},
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    return `${label}: ${formatDecimal(value)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {display: false},
+                            ticks: {maxTicksLimit: 8}
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {color: 'rgba(15, 23, 42, 0.08)'}
+                        }
+                    }
+                }
+            });
+        };
+
+        const renderTable = (history, forecast) => {
+            if (!tableBody) {
+                return;
+            }
+            const historySlice = history.length > tableHistoryLimit
+                ? history.slice(history.length - tableHistoryLimit)
+                : history;
+
+            const rows = [];
+            historySlice.forEach((point) => {
+                rows.push(`<tr><td>${escapeHtml(formatDate(point.date))}</td><td>${escapeHtml(formatInteger(point.quantity))}</td><td>—</td></tr>`);
+            });
+            forecast.forEach((point) => {
+                rows.push(`<tr class="forecast-row"><td>${escapeHtml(formatDate(point.date))}</td><td>—</td><td>${escapeHtml(formatDecimal(point.value))}</td></tr>`);
+            });
+
+            tableBody.innerHTML = rows.join('');
+
+            if (tableHint) {
+                if (history.length > tableHistoryLimit) {
+                    tableHint.textContent = `Показаны последние ${tableHistoryLimit} ${unitLong} истории и прогноз на ${forecast.length} ${unitLong}.`;
+                } else if (forecast.length > 0) {
+                    tableHint.textContent = `История ${history.length} ${unitLong} и прогноз на ${forecast.length} ${unitLong}.`;
+                } else {
+                    tableHint.textContent = `История ${history.length} ${unitLong}.`;
+                }
+            }
+        };
+
+        const renderForecast = (result, context) => {
+            const history = Array.isArray(result.history) ? result.history : [];
+            const forecast = Array.isArray(result.forecast) ? result.forecast : [];
+            const metrics = result.metrics || null;
+            const model = (result.model || 'Holt').toUpperCase();
+            const isCroston = model === 'CROSTON';
+
+            if (resultBody) {
+                resultBody.classList.remove('d-none');
+            }
+            if (emptyState) {
+                emptyState.classList.add('d-none');
+            }
+
+            if (selectedProduct) {
+                selectedProduct.textContent = findProductLabel(result.productId);
+            }
+
+            if (historyDaysValue) {
+                historyDaysValue.textContent = history.length ? `${history.length} ${context.unitShort}` : '—';
+            }
+            if (historyRangeValue) {
+                if (history.length > 0) {
+                    const rangeStart = history[0].date;
+                    const rangeEndRaw = history[history.length - 1].date;
+                    let rangeEnd = rangeEndRaw;
+                    if (isWeekly) {
+                        const rangeEndDate = new Date(`${rangeEndRaw}T00:00:00`);
+                        if (!Number.isNaN(rangeEndDate.getTime())) {
+                            rangeEndDate.setDate(rangeEndDate.getDate() + 6);
+                            rangeEnd = rangeEndDate;
+                        }
+                    }
+                    historyRangeValue.textContent = `${formatDate(rangeStart)} — ${formatDate(rangeEnd)}`;
+                } else {
+                    historyRangeValue.textContent = 'Нет истории';
+                }
+            }
+
+            if (metrics && metrics.evaluatedPoints > 0) {
+                if (maeValue) {
+                    maeValue.textContent = formatDecimal(metrics.mae);
+                }
+                if (maeNote) {
+                    maeNote.textContent = `на ${metrics.evaluatedPoints} точках`;
+                }
+                if (mapeValue) {
+                    mapeValue.textContent = formatPercent(metrics.mape);
+                }
+                if (mapeNote) {
+                    mapeNote.textContent = `на ${metrics.evaluatedPoints} точках`;
+                }
+            } else {
+                if (maeValue) {
+                    maeValue.textContent = '—';
+                }
+                if (maeNote) {
+                    maeNote.textContent = 'Недостаточно данных';
+                }
+                if (mapeValue) {
+                    mapeValue.textContent = '—';
+                }
+                if (mapeNote) {
+                    mapeNote.textContent = 'Недостаточно данных';
+                }
+            }
+
+            const warningText = result.insufficientData
+                ? 'История отгрузок слишком короткая. Прогноз не построен.'
+                : (isCroston
+                    ? `Спрос прерывистый — прогноз показан как среднее ожидаемое значение ${unitAccusative}.`
+                    : (!forecast.length ? 'Прогноз не был построен из-за нехватки данных.' : ''));
+            updateWarning(warningText);
+
+            const modelLabel = isCroston ? 'Croston' : 'Holt';
+            const badges = [
+                {label: modelLabel},
+                {label: `α=${formatDecimal(result.alpha)}`},
+                {label: `окно ${context.historyDays} ${unitShort}`},
+                {label: `валидация ${context.validationWindow} ${unitShort}`},
+                {label: `горизонт ${context.horizonDays} ${unitShort}`}
+            ];
+            if (!isCroston) {
+                badges.splice(2, 0, {label: `β=${formatDecimal(result.beta)}`});
+            }
+            buildBadges(badges);
+
+            renderChart(history, forecast);
+            renderTable(history, forecast);
+        };
+
+        const clampNumber = (input, fallback) => {
+            if (!input) {
+                return fallback;
+            }
+            const rawValue = Number(input.value);
+            if (Number.isNaN(rawValue)) {
+                return fallback;
+            }
+            const min = input.min ? Number(input.min) : null;
+            const max = input.max ? Number(input.max) : null;
+            let value = Math.floor(rawValue);
+            if (!Number.isNaN(min)) {
+                value = Math.max(value, min);
+            }
+            if (!Number.isNaN(max)) {
+                value = Math.min(value, max);
+            }
+            if (Number.isNaN(value) || value <= 0) {
+                return fallback;
+            }
+            input.value = value;
+            return value;
+        };
+
+        const renderProductOptions = () => {
+            if (!productSelect) {
+                return;
+            }
+            if (!products.length) {
+                productSelect.innerHTML = '<option disabled>Нет товаров</option>';
+                productSelect.disabled = true;
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+                return;
+            }
+            const options = products
+                .slice()
+                .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                .map((product) => {
+                    const category = product.category && product.category.name ? ` - ${product.category.name}` : '';
+                    return `<option value=\"${product.id}\">${escapeHtml(product.name)}${escapeHtml(category)}</option>`;
+                });
+            productSelect.disabled = false;
+            productSelect.innerHTML = options.join('');
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+        };
+
+        const loadProducts = async () => {
+            try {
+                const data = await apiRequest('/products');
+                products = Array.isArray(data) ? data : [];
+                renderProductOptions();
+            } catch (error) {
+                if (error && error.code === 'UNAUTHORIZED') {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!handleAuthError(error, feedbackModal)) {
+                    feedbackModal.show({
+                        title: 'Не удалось загрузить товары',
+                        message: error.message || 'Попробуйте повторить попытку позже.'
+                    });
+                }
+            }
+        };
+
+        form?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+            if (!productSelect || !productSelect.value) {
+                return;
+            }
+            const productId = Number(productSelect.value);
+            if (Number.isNaN(productId)) {
+                return;
+            }
+
+            const historyDays = clampNumber(historyInput, 16);
+            const validationWindow = clampNumber(validationInput, 2);
+            const horizonDays = clampNumber(horizonInput, 2);
+            const params = new URLSearchParams({
+                productId: productId.toString(),
+                historyDays: historyDays.toString(),
+                validationWindow: validationWindow.toString(),
+                horizonDays: horizonDays.toString(),
+                granularity
+            });
+
+            toggleLoading(true);
+            try {
+                const result = await apiRequest(`/forecasts?${params.toString()}`);
+                renderForecast(result, {
+                    historyDays,
+                    validationWindow,
+                    horizonDays,
+                    unitShort,
+                    unitLong
+                });
+                toast('Прогноз рассчитан');
+            } catch (error) {
+                if (!handleAuthError(error, feedbackModal)) {
+                    feedbackModal.show({
+                        title: 'Не удалось построить прогноз',
+                        message: error.message || 'Попробуйте повторить попытку позже.'
+                    });
+                }
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        loadProducts();
     }
 
     function initCounterpartiesPage() {

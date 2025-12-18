@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Прогноз спроса</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+          crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="bg-light">
+<th:block th:replace="~{fragments/layout :: appHeader('forecast')}"></th:block>
+<main class="management-page py-5 forecast-page" id="forecastPage">
+    <div class="container">
+        <div class="mb-4">
+            <a th:href="@{/dashboard}" class="btn btn-outline-dark page-back-btn d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Назад</span>
+            </a>
+        </div>
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 mb-4">
+            <div class="text-center text-sm-start">
+                <p class="text-uppercase text-muted small mb-1">Аналитика</p>
+                <h1 class="display-6 fw-bold mb-0">Прогноз спроса</h1>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-lg-4">
+                <div class="management-card h-100">
+                    <div class="d-flex flex-column gap-2 mb-4">
+                        <p class="text-uppercase text-muted small mb-1">Параметры</p>
+                        <h2 class="h5 fw-semibold mb-0">Настройте модель</h2>
+                        <p class="text-muted mb-0">Система построит прогноз спроса на основе истории отгрузок.</p>
+                    </div>
+                    <form id="forecastForm" class="forecast-form needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="forecastProductSelect" class="form-label text-body-secondary fw-semibold">
+                                Товар
+                            </label>
+                            <select id="forecastProductSelect" class="form-select" required>
+                                <option disabled>Загрузка...</option>
+                            </select>
+                            <div class="form-text">Выберите позицию, для которой нужен прогноз.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="forecastHistory" class="form-label text-body-secondary fw-semibold">
+                                Окно истории (недели)
+                            </label>
+                            <input type="number" class="form-control" id="forecastHistory" name="historyDays"
+                                   min="4" max="52" value="16" required>
+                            <div class="form-text">Сколько последних недель использовать в обучении модели.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="forecastValidation" class="form-label text-body-secondary fw-semibold">
+                                Окно проверки (недели)
+                            </label>
+                            <input type="number" class="form-control" id="forecastValidation" name="validationWindow"
+                                   min="1" max="26" value="2" required>
+                            <div class="form-text">Длина отрезка для оценки качества прогноза.</div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="forecastHorizon" class="form-label text-body-secondary fw-semibold">
+                                Горизонт прогноза (недели)
+                            </label>
+                            <input type="number" class="form-control" id="forecastHorizon" name="horizonDays"
+                                   min="1" max="26" value="2" required>
+                            <div class="form-text">На сколько недель вперёд строить прогноз.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-dark" id="forecastSubmit">
+                                <span class="default-text">Рассчитать прогноз</span>
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                                      aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="forecast-note mt-4">
+                        <div class="forecast-note__badge">Holt</div>
+                        <div>
+                            <p class="fw-semibold mb-1">Модель двойного сглаживания</p>
+                            <p class="small text-muted mb-0">
+                                Учитывает уровень и тренд, чтобы сгладить шум и показать движение спроса.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-8">
+                <div class="management-card h-100">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <p class="text-uppercase text-muted small mb-1">Результат</p>
+                            <h2 class="h5 fw-semibold mb-1">Прогноз для <span id="forecastSelectedProduct">—</span></h2>
+                            <p class="text-muted mb-0">История и прогноз показаны по неделям.</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 align-self-start" id="forecastModelBadges"></div>
+                    </div>
+                    <div id="forecastEmptyState" class="forecast-empty-state text-center py-5">
+                        <div class="warehouse-empty-icon text-dark mb-3">
+                            <i class="bi bi-graph-up-arrow h2 mb-0"></i>
+                        </div>
+                        <h2 class="h5 mb-1">Прогноз ещё не построен</h2>
+                        <p class="text-muted mb-0">Выберите товар и параметры слева, чтобы запустить расчёт.</p>
+                    </div>
+                    <div id="forecastResultBody" class="d-none">
+                        <div id="forecastWarning" class="alert alert-warning d-none" role="alert"></div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-4">
+                                <div class="forecast-kpi">
+                                    <p class="text-uppercase small text-muted mb-1">История</p>
+                                    <div class="h4 fw-bold mb-0" id="forecastHistoryDays">—</div>
+                                    <p class="small text-muted mb-0" id="forecastHistoryRange">—</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="forecast-kpi">
+                                    <p class="text-uppercase small text-muted mb-1">MAE</p>
+                                    <div class="h4 fw-bold mb-0" id="forecastMae">—</div>
+                                    <p class="small text-muted mb-0" id="forecastMaeNote">—</p>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="forecast-kpi">
+                                    <p class="text-uppercase small text-muted mb-1">MAPE</p>
+                                    <div class="h4 fw-bold mb-0" id="forecastMape">—</div>
+                                    <p class="small text-muted mb-0" id="forecastMapeNote">—</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="forecast-chart-wrapper mb-4" id="forecastChartWrapper">
+                            <canvas id="forecastChart" aria-label="График прогноза спроса" role="img"></canvas>
+                        </div>
+                        <div class="forecast-table-wrapper">
+                            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 mb-3">
+                                <h3 class="h6 fw-semibold mb-0">Таблица прогноза</h3>
+                                <span class="small text-muted" id="forecastTableHint"></span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table align-middle management-table forecast-table">
+                                    <thead>
+                                    <tr>
+                                    <th scope="col">Неделя</th>
+                                        <th scope="col">Факт</th>
+                                        <th scope="col">Прогноз</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="forecastTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<div class="modal fade" id="forecastAlertModal" tabindex="-1" aria-labelledby="forecastAlertTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-spacious border-0 rounded-4 shadow">
+            <button type="button" class="btn-close modal-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            <div class="modal-header border-0 justify-content-center pt-0">
+                <h2 class="modal-title fs-5 text-center w-100 mb-0" id="forecastAlertTitle"
+                    data-modal="title">Сообщение</h2>
+            </div>
+            <div class="modal-body text-body-secondary pt-3 pb-0" data-modal="body">
+                Подождите, идёт обработка запроса...
+            </div>
+            <div class="modal-footer border-0 flex-column flex-sm-row gap-2 pt-3">
+                <button type="button" class="btn btn-outline-dark w-100" data-bs-dismiss="modal"
+                        data-modal="close">Закрыть</button>
+                <button type="button" class="btn btn-dark w-100 d-none" data-modal="action"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:replace="~{fragments/layout :: logoutModal}"></th:block>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<th:block th:replace="~{fragments/layout :: baseScripts}"></th:block>
+</body>
+</html>
